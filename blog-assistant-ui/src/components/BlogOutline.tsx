@@ -3,10 +3,8 @@ import { useState } from "react";
 import { Card, CardContent, Typography, List, ListItem, ListItemButton, ListItemText, Button } from "@mui/material";
 import {useLocation} from "react-router-dom";
 
-const ArticleResponseCard = () => {
+const ArticleResponseCard = ({blog}) => {
     const [expanded, setExpanded] = useState({});
-    const location = useLocation();
-    const blog = location.state.blog;
 
     const toggleExpand = (id) => {
         setExpanded((prev) => ({ ...prev, [id]: !prev[id] }));
@@ -40,7 +38,6 @@ const ArticleResponseCard = () => {
                         ))}
                     </div>
                 ))}
-                <Button variant="contained" sx={{ mt: 2 }}>Read Full Blog</Button>
             </CardContent>
         </Card>}
     </div>

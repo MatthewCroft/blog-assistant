@@ -38,7 +38,7 @@ function BlogForm() {
 
         const data = await response.json();
         if (data.title && data.outline) {
-            navigate(`/blog-details`, { state: { blog: data } });
+            navigate(`/blog-edit`, { state: { blog: data } });
         }
         console.log(data);
     }
