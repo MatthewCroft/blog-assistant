@@ -52,16 +52,16 @@ const AiSuggestionMenu = ({ setMessage, position, editor }) => {
                     <AutoFixHigh />
                 </IconButton>
             </Tooltip>
-            <Tooltip title="Shorten this section using AI">
-                <IconButton onMouseDown={() => refineSelection("shorten")}>
-                    <RemoveCircleOutline />
-                </IconButton>
-            </Tooltip>
-            <Tooltip title="Expand this section using AI">
-                <IconButton onMouseDown={() => refineSelection("expand")}>
-                    <AddCircleOutline />
-                </IconButton>
-            </Tooltip>
+            {/*<Tooltip title="Shorten this section using AI">*/}
+            {/*    <IconButton onMouseDown={() => refineSelection("shorten")}>*/}
+            {/*        <RemoveCircleOutline />*/}
+            {/*    </IconButton>*/}
+            {/*</Tooltip>*/}
+            {/*<Tooltip title="Expand this section using AI">*/}
+            {/*    <IconButton onMouseDown={() => refineSelection("expand")}>*/}
+            {/*        <AddCircleOutline />*/}
+            {/*    </IconButton>*/}
+            {/*</Tooltip>*/}
         </div>
     );
 };
