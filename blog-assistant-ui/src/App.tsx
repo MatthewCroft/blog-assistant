@@ -7,6 +7,8 @@ import BlogForm from "./components/BlogForm.tsx";
 import BlogOutline from "./components/BlogOutline.tsx";
 import EditBlog from "./components/EditBlog.tsx";
 import Tiptap from "./components/Tiptap.tsx";
+import UsernameModal from "./components/UsernameModal.tsx";
+import UserHomePage from "./components/UserHomePage.tsx";
 
 function App() {
 
@@ -17,6 +19,8 @@ function App() {
              <Route path="/blog-question" element={<BlogForm/>}/>
              <Route path="/blog-edit" element={<EditBlog/>}/>
              <Route path="/tiptap" element={<Tiptap/>}/>
+             <Route path="/" element={<UsernameModal/>}/>
+             <Route path="/home" element={<UserHomePage/>}/>
          </Routes>
      </BrowserRouter>
     </>

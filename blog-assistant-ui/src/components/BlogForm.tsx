@@ -2,11 +2,13 @@ import { useState } from "react";
 import {TextField, Select, MenuItem, Slider, Card, CardContent, Button, Typography, Grid} from "@mui/material";
 import {useNavigate} from "react-router-dom";
 import React from 'react';
-
+import Cookies from "js-cookie";
+import BlogOutlineSpinner from "./BlogOutlineSpinner.tsx";
 
 function BlogForm() {
     const navigate = useNavigate();
     const [form, setForm] = useState({
+        userName: "",
         title: "",
         category: "",
         tone: "",
@@ -21,30 +23,57 @@ function BlogForm() {
         painPoints: "",
         uniqueAngle: ""
     });
+    const [loading, setLoading] = useState(false);
 
     const handleChange = (e) => {
         setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
     };
 
     async function submitForm(){
+       setLoading(true);
        console.log("Submit form called: " + form);
-        const response = await fetch(`http://localhost:8080/api/blog/generate-outline`, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify(form),
-        });
+       let user = Cookies.get("userName");
+       if (!user) {
+           console.error("username required");
+           return;
+       }
 
-        const data = await response.json();
-        if (data.title && data.outline) {
-            navigate(`/blog-edit`, { state: { blog: data } });
-        }
-        console.log(data);
+       console.log(String(user));
+
+        setForm(prevState => {
+            const updatedForm = { ...prevState, userName: String(user) };
+
+            (async () => {
+                try {
+                    const response = await fetch(`http://localhost:8080/api/blog/generate-outline`, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify(updatedForm),
+                    });
+
+                    const data = await response.json();
+                    if (data.title && data.outline) {
+                        setLoading(false);
+                        navigate(`/blog-edit`, { state: { blog: data } });
+                    } else {
+                        setLoading(false);
+                    }
+                    console.log(data);
+                } catch (error) {
+                    console.error("Error generating blog outline:", error);
+                    setLoading(false);
+                }
+            })();
+
+            return updatedForm;
+        });
     }
 
     return (
-        <Card sx={{ maxWidth: 900, margin: "auto", padding: 2 }}>
+        <>
+        {loading && <BlogOutlineSpinner/>}
+        {!loading &&
+            <Card sx={{ maxWidth: 900, margin: "auto", padding: 2 }}>
             <CardContent>
                 <Typography variant="h6" gutterBottom>Basic Article Information</Typography>
 
@@ -142,7 +171,8 @@ function BlogForm() {
 
                 <Button variant="contained" onClick={submitForm} fullWidth sx={{ mt: 2 }}>Submit</Button>
             </CardContent>
-        </Card>
+        </Card>}
+        </>
     );
 }
 

@@ -5,19 +5,101 @@ import ListItem from "@tiptap/extension-list-item";
 import TextStyle from "@tiptap/extension-text-style";
 import { EditorProvider, useCurrentEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
-import React from "react";
-import { Button, MenuItem, Select, IconButton } from "@mui/material";
-import { FormatBold, FormatItalic, FormatStrikethrough, Code, FormatListBulleted, FormatListNumbered, FormatQuote, Undo, Redo } from "@mui/icons-material";
+import React, {useEffect, useState} from "react";
+import {Button, MenuItem, Select, IconButton, Tooltip} from "@mui/material";
+import {
+    FormatBold,
+    FormatItalic,
+    FormatStrikethrough,
+    Code,
+    FormatListBulleted,
+    FormatListNumbered,
+    FormatQuote,
+    Undo,
+    Redo,
+    AddCircleOutline, RemoveCircleOutline, AutoFixHigh
+} from "@mui/icons-material";
 
-const MenuBar = () => {
+const AiSuggestionMenu = ({ setMessage, position, editor }) => {
+    if (!position || !editor) return null;
+
+    function refineSelection(messageType) {
+       const clonedSelection = document.getSelection().getRangeAt(0).cloneContents()
+       let div = document.createElement('div');
+       div.appendChild(clonedSelection);
+       console.log("here");
+       setMessage({message: div.innerHTML, messageType: messageType});
+    }
+
+    return (
+        <div
+            style={{
+                position: "absolute",
+                top: position.top,
+                left: position.left,
+                background: "white",
+                padding: "5px",
+                boxShadow: "0px 0px 5px rgba(0,0,0,0.2)",
+                borderRadius: "4px",
+                display: "flex",
+                gap: "5px",
+                zIndex: 1000,
+            }}
+            onMouseDown={(e) => e.preventDefault()} // Prevents the editor from losing focus
+        >
+            <Tooltip title="Rewrite this section using AI">
+                <IconButton onMouseDown={() => refineSelection("rewrite")}>
+                    <AutoFixHigh />
+                </IconButton>
+            </Tooltip>
+            <Tooltip title="Shorten this section using AI">
+                <IconButton onMouseDown={() => refineSelection("shorten")}>
+                    <RemoveCircleOutline />
+                </IconButton>
+            </Tooltip>
+            <Tooltip title="Expand this section using AI">
+                <IconButton onMouseDown={() => refineSelection("expand")}>
+                    <AddCircleOutline />
+                </IconButton>
+            </Tooltip>
+        </div>
+    );
+};
+
+const MenuBar = ({setMessage}) => {
     const { editor } = useCurrentEditor();
+    const [menuPosition, setMenuPosition] = useState();
+
+    useEffect(() => {
+        if (!editor) return;
+
+        const updateSelection = () => {
+            const { from, to } = editor.state.selection;
+            if (from === to) {
+                setMenuPosition(null);
+                return;
+            }
+
+            const selectionCoords = editor.view.coordsAtPos(from);
+            setMenuPosition({ top: selectionCoords.top - 50, left: selectionCoords.left });
+        };
+
+        editor.on("selectionUpdate", updateSelection);
+        return () => editor.off("selectionUpdate", updateSelection);
+    }, [editor]);
+
+    if (!editor) {
+        return null;
+    }
 
     if (!editor) {
         return null;
     }
 
     return (
-        <div className="control-group" style={{ display: "flex", alignItems: "center", gap: "10px", flexDirection: "row", borderBottom: "2px solid #ccc", paddingBottom: "5px", marginBottom: "10px"}}>
+    <>
+    <AiSuggestionMenu setMessage={setMessage} position={menuPosition} editor={editor} />
+    <div className="control-group" style={{ display: "flex", alignItems: "center", gap: "10px", flexDirection: "row", borderBottom: "2px solid #ccc", paddingBottom: "5px", marginBottom: "10px"}}>
             <Select
                 value={editor.isActive("heading", { level: 1 }) ? "h1" :
                     editor.isActive("heading", { level: 2 }) ? "h2" :
@@ -67,6 +149,7 @@ const MenuBar = () => {
                 </IconButton>
             </div>
         </div>
+        </>
     );
 };
 
@@ -115,9 +198,9 @@ const content = `<h2>
 </blockquote>
 `;
 
-export const Tiptap = () => {
+export const Tiptap = ({setMessage}) => {
     return (
-        <EditorProvider slotBefore={<MenuBar />} extensions={extensions} content={content} />
+        <EditorProvider slotBefore={<MenuBar setMessage={setMessage}/>} extensions={extensions} content={content} />
     );
 };
 

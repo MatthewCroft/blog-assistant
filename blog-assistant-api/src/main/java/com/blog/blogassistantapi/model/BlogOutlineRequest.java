@@ -3,6 +3,7 @@ package com.blog.blogassistantapi.model;
 import java.util.List;
 
 public class BlogOutlineRequest {
+    private String userName;
     private String title;
     private String category;
     private String tone;
@@ -16,6 +17,14 @@ public class BlogOutlineRequest {
     private String targetProficiency;
     private String painPoints;
     private String uniqueAngle;
+
+    public String getUserName() {
+        return userName;
+    }
+
+    public void setUserName(String userName) {
+        this.userName = userName;
+    }
 
     public String getKeywords() {
         return keywords;

@@ -8,33 +8,36 @@ import com.theokanning.openai.completion.chat.ChatCompletionRequest;
 import com.theokanning.openai.completion.chat.ChatMessage;
 import com.theokanning.openai.embedding.EmbeddingRequest;
 import com.theokanning.openai.embedding.EmbeddingResult;
-import io.pinecone.clients.Index;
-import io.pinecone.clients.Pinecone;
-import io.pinecone.proto.*;
-import org.openapitools.db_control.client.model.DeletionProtection;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
-public class ChatGPTService {
+public class BlogGeneratorService {
 
-    private static final String OPENAI_API_KEY = ""; // Replace with your API Key
-    private final OpenAiService openAiService;
+    private Map<String, List<BlogOutlineResponse>> blogMemory = new HashMap<>();
+    private final OpenAIService openAiService;
     private final PineconeService pineconeService;
 
-    public ChatGPTService(PineconeService pineconeService) {
-        this.openAiService = new OpenAiService(OPENAI_API_KEY, Duration.ofSeconds(30));
+    public BlogGeneratorService(PineconeService pineconeService, OpenAIService openAIService) {
         this.pineconeService = pineconeService;
+        this.openAiService = openAIService;
    }
 
-    public BlogOutlineResponse generateBlogOutline(BlogOutlineRequest request) {
+   public List<BlogOutlineResponse> getUserBlogs(String userName) {
+        return blogMemory.getOrDefault(userName, new ArrayList<>());
+   }
+
+   public BlogOutlineResponse generateBlogOutline(BlogOutlineRequest request) {
         String prompt = generatePrompt(request);
 
         // Generate embeddings for the request
-        List<Float> embedding = generateEmbedding(prompt);
+        List<Float> embedding = openAiService.generateEmbedding(prompt);
 
         // Search Pinecone for relevant stored embeddings
         List<String> relevantVectors = pineconeService.searchPinecone(embedding);
@@ -44,40 +47,16 @@ public class ChatGPTService {
             prompt = augmentPromptWithContext(prompt, relevantVectors);
         }
 
-        // Call ChatGPT with the enhanced prompt
-        ChatCompletionRequest completionRequest = ChatCompletionRequest.builder()
-                .model("gpt-4")
-                .messages(List.of(new ChatMessage("user", prompt)))
-                .temperature(0.7)
-                .build();
-
-        String content = openAiService.createChatCompletion(completionRequest)
-                .getChoices()
-                .get(0)
-                .getMessage()
-                .getContent();
+        String content = openAiService.chatCompletion(prompt);
 
         // Save the embedding in Pinecone for future use
         pineconeService.saveEmbedding(prompt, embedding);
 
-        return parseResponse(content);
+        BlogOutlineResponse response = parseResponse(content);
+        blogMemory.putIfAbsent(request.getUserName(), new ArrayList<>());
+        blogMemory.get(request.getUserName()).add(response);
+        return response;
     }
-
-    private List<Float> generateEmbedding(String text) {
-        EmbeddingRequest embeddingRequest = EmbeddingRequest.builder()
-                .model("text-embedding-ada-002")
-                .input(List.of(text))
-                .build();
-
-        EmbeddingResult embeddingResult = openAiService.createEmbeddings(embeddingRequest);
-
-        // Convert List<Double> to List<Float>
-        return embeddingResult.getData().get(0).getEmbedding().stream()
-                .map(Double::floatValue)
-                .collect(Collectors.toList());
-    }
-
-
 
     private String augmentPromptWithContext(String prompt, List<String> vectors) {
         StringBuilder context = new StringBuilder("Relevant context from previous blog outlines:\n\n");
