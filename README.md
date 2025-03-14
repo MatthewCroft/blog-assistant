@@ -15,6 +15,10 @@ This project leverages Pinecone to store embeddings, enabling contextual AI assi
 
 ## Setup and Installation
 
+### API Key Requirement
+Before running the backend service, you must provide your own OpenAI API key. This key should be placed in the `OPEN_API_KEY` string inside the `OpenAIService` class.
+
+
 To run this project, follow these steps:
 
 ### Backend (Spring Boot API)
